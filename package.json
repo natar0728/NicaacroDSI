@@ -1,14 +1,17 @@
 {
   "name": "nicaacro_dsi",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "API REST del sistema de Gestion de Eventos de NicaAcro",
+  "main": "src/server.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
     "cors": "^2.8.6",
     "dotenv": "^18.0.7",
