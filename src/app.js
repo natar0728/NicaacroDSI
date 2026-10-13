@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import personaRoutes from './routes/persona.routes.js';
 
 const app = express();
 
@@ -16,5 +17,8 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+
+//rutas de la api
+app.use('/api/personas', personaRoutes);
 
 export default app;
