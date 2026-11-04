@@ -1,7 +1,72 @@
-import React,{useState} from 'react';
-import {LockKeyhole,UserRound,Eye,EyeOff} from 'lucide-react';
-export default function Login({navigate}){const[user,setUser]=useState('');const[password,setPassword]=useState('');const[visible,setVisible]=useState(false);return <main className="login-page">
- <img className="login-logo" src="/images/logo.svg" alt="NicaAcro Festival Play"/>
- <section className="login-card"><h2>NICACRO<br/>PLAY</h2><p>Ingresa al sistema</p><form onSubmit={e=>{e.preventDefault();navigate('/menu')}}><label>Usuario</label><div className="login-input"><UserRound size={15}/><input value={user} onChange={e=>setUser(e.target.value)} autoComplete="username" placeholder="Nombre de usuario"/></div><label>Contraseña</label><div className="login-input"><LockKeyhole size={15}/><input type={visible?'text':'password'} autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="Contraseña"/><button type="button" onClick={()=>setVisible(v=>!v)} aria-label={visible?'Ocultar contraseña':'Mostrar contraseña'}>{visible?<EyeOff size={15}/>:<Eye size={15}/>}</button></div><button type="submit" className="login-submit">EXPLORAR EL PANEL</button></form><div className="login-warning">Vista previa: el backend aún no tiene endpoint de inicio de sesión. No se validan ni envían credenciales.</div></section>
- <img className="login-waves" src="/images/waves.svg" alt="" aria-hidden="true"/>
- </main>}
+import { useState } from "react";
+import { LockKeyhole, UserRound, Eye, EyeOff } from "lucide-react";
+export default function Login({ navigate }) {
+  const [user, setUser] = useState("");
+  const [password, setPassword] = useState("");
+  const [visible, setVisible] = useState(false);
+  return (
+    <main className="login-page">
+      <img
+        className="login-logo"
+        src="/images/logo.png"
+        alt="NicaAcro Festival Play"
+      />
+      <section className="login-card">
+        <h2>
+          NICACRO
+          <br />
+          PLAY
+        </h2>
+        <p>Ingresa al sistema</p>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            navigate("/menu");
+          }}
+        >
+          <label>Usuario</label>
+          <div className="login-input">
+            <UserRound size={15} />
+            <input
+              value={user}
+              onChange={(e) => setUser(e.target.value)}
+              autoComplete="username"
+              placeholder="Nombre de usuario"
+            />
+          </div>
+          <label>Contraseña</label>
+          <div className="login-input">
+            <LockKeyhole size={15} />
+            <input
+              type={visible ? "text" : "password"}
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Contraseña"
+            />
+            <button
+              type="button"
+              onClick={() => setVisible((v) => !v)}
+              aria-label={visible ? "Ocultar contraseña" : "Mostrar contraseña"}
+            >
+              {visible ? <EyeOff size={15} /> : <Eye size={15} />}
+            </button>
+          </div>
+          <button type="submit" className="login-submit">
+            EXPLORAR EL PANEL
+          </button>
+        </form>
+        <div className="login-warning">
+          Vista previa: el backend aún no tiene endpoint de inicio de sesión. No
+          se validan ni envían credenciales.
+        </div>
+      </section>
+      <img
+        className="login-waves"
+        src="/images/waves.svg"
+        alt=""
+        aria-hidden="true"
+      />
+    </main>
+  );
+}
