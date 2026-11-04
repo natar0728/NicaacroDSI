@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 108">
- <rect width="280" height="108" fill="#fff" rx="9"/>
- <g transform="translate(16 15)"><circle cx="35" cy="33" r="30" fill="#f1f8e9" stroke="#7da26b" stroke-width="3"/><path d="M7 42Q30 38 35 8L49 38Q56 28 64 29" fill="none" stroke="#16623b" stroke-width="5" stroke-linecap="round"/><path d="M11 51Q30 34 58 53" fill="none" stroke="#93a943" stroke-width="6"/><path d="M25 21l7-7 5 9" stroke="#cf903b" fill="none" stroke-width="3"/></g>
- <text x="92" y="45" font-family="Arial,sans-serif" font-size="29" font-weight="800" fill="#17603d">NICACRO</text>
- <text x="92" y="72" font-family="Arial,sans-serif" font-size="13" letter-spacing="4" fill="#4f9a65">FESTIVAL PLAY</text>
-</svg>
