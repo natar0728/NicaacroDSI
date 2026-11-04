@@ -1,19 +1,205 @@
-import React,{useMemo,useState} from 'react';
-import {Plus,Search,UsersRound,Eye,Edit3,RefreshCw} from 'lucide-react';
-import {StatCard,Banner,PersonBadge} from '../components/UI';
-import {fullName,personCode,idLabel} from '../data/demo';
-export default function Participants({navigate,people,demo,peopleLoading,peopleError,refresh}){
- const[search,setSearch]=useState('');const[nombre,setNombre]=useState('');const[identificacion,setIdentificacion]=useState('');const[correo,setCorreo]=useState('');const[status,setStatus]=useState('TODOS');const[tipo,setTipo]=useState('TODOS');
- const items=people.filter(p=>p.tipoPersona==='PARTICIPANTE');
- const rows=useMemo(()=>items.filter(p=>{
-  const match=(text,needle)=>String(text||'').toLocaleLowerCase('es').includes(needle.trim().toLocaleLowerCase('es'));
-  return match([fullName(p),personCode(p),p.correo,p.telefono].join(' '),search)&&match(fullName(p),nombre)&&match(p.numeroIdentificacion,identificacion)&&match(p.correo,correo)&&(status==='TODOS'||p.estado===status)&&(tipo==='TODOS'||p.tipoIdentificacion===tipo);
- }),[items,search,nombre,identificacion,correo,status,tipo]);
- return <div className="participants-screen"><div className="participants-background"><div className="participant-stats"><StatCard Icon={UsersRound} label="PARTICIPANTES" value={demo?'100':items.length} helper={demo?'Inscritos en este evento · ejemplo':'Personas registradas en la API'}/><StatCard Icon={UsersRound} label="PARTICIPANTES" value={demo?'50':'—'} helper="Inscritos solo a evento · sin API"/><StatCard Icon={UsersRound} label="PARTICIPANTES" value={demo?'25':'—'} helper="Inscritos a evento y hostal · sin API"/></div>
- <section className="participants-panel"><div className="filters-top"><div className="filter-search"><Search size={17}/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar participantes..." aria-label="Buscar participantes"/></div><select aria-label="Estado" value={status} onChange={e=>setStatus(e.target.value)}><option value="TODOS">Estado: Todos</option><option value="ACTIVA">Activo</option><option value="INACTIVA">Inactivo</option></select><select aria-label="Tipo de identificación" value={tipo} onChange={e=>setTipo(e.target.value)}><option value="TODOS">Tipo de identificación</option>{Object.entries(idLabel).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select><button className="blue-button" onClick={()=>navigate('/participantes/nuevo')}><Plus size={16}/> Registrar Participante</button></div>
- <div className="search-extended"><label>Nombre<input value={nombre} onChange={e=>setNombre(e.target.value)} placeholder="Buscar por nombre"/></label><label>Número de identificación<input value={identificacion} onChange={e=>setIdentificacion(e.target.value)} placeholder="Ej. NI-204831"/></label><label>Correo<input value={correo} onChange={e=>setCorreo(e.target.value)} type="search" placeholder="nombre@correo.com"/></label></div>
- {peopleError&&!demo&&<Banner kind="error">{peopleError}</Banner>}
- <div className="data-table-wrap"><table className="data-table"><thead><tr><th>Código</th><th>Nombre completo</th><th>Identificación</th><th>Correo</th><th>Teléfono</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>{peopleLoading?<tr><td colSpan={7} className="table-empty">Cargando participantes…</td></tr>:rows.length?rows.map(p=><tr key={p._id}><td className="code-cell">{personCode(p)}</td><td>{fullName(p)}</td><td>{personCode(p)}</td><td>{p.correo||'—'}</td><td>{p.telefono||'—'}</td><td><PersonBadge estado={p.estado}/></td><td className="table-actions"><button onClick={()=>navigate(`/participantes/${p._id}/editar`)}>Editar</button><button onClick={()=>navigate(`/participantes/${p._id}`)}>Ver</button></td></tr>):<tr><td colSpan={7} className="table-empty">No se encontraron participantes con esos filtros.</td></tr>}</tbody></table></div>
- <div className="table-bottom"><span>{rows.length} de {items.length} participantes {demo&&'· ejemplos'}</span><button onClick={refresh} className="ghost-button"><RefreshCw size={15}/> Actualizar</button></div>
- </section></div></div>
+import React, { useMemo, useState } from "react";
+import { Plus, Search, UsersRound, Eye, Edit3, RefreshCw } from "lucide-react";
+import { StatCard, Banner, PersonBadge } from "../components/UI";
+import { fullName, personCode, idLabel } from "../data/demo";
+export default function Participants({
+  navigate,
+  people,
+  demo,
+  peopleLoading,
+  peopleError,
+  refresh,
+}) {
+  const [search, setSearch] = useState("");
+  const [nombre, setNombre] = useState("");
+  const [identificacion, setIdentificacion] = useState("");
+  const [correo, setCorreo] = useState("");
+  const [status, setStatus] = useState("TODOS");
+  const [tipo, setTipo] = useState("TODOS");
+  const items = people.filter((p) => p.tipoPersona === "PARTICIPANTE");
+  const rows = useMemo(
+    () =>
+      items.filter((p) => {
+        const match = (text, needle) =>
+          String(text || "")
+            .toLocaleLowerCase("es")
+            .includes(needle.trim().toLocaleLowerCase("es"));
+        return (
+          match(
+            [fullName(p), personCode(p), p.correo, p.telefono].join(" "),
+            search,
+          ) &&
+          match(fullName(p), nombre) &&
+          match(p.numeroIdentificacion, identificacion) &&
+          match(p.correo, correo) &&
+          (status === "TODOS" || p.estado === status) &&
+          (tipo === "TODOS" || p.tipoIdentificacion === tipo)
+        );
+      }),
+    [items, search, nombre, identificacion, correo, status, tipo],
+  );
+  return (
+    <div className="participants-screen">
+      <div className="participants-background">
+        <div className="participant-stats">
+          <StatCard
+            Icon={UsersRound}
+            label="PARTICIPANTES"
+            value={demo ? "100" : items.length}
+            helper={
+              demo
+                ? "Inscritos en este evento · ejemplo"
+                : "Personas registradas en la API"
+            }
+          />
+          <StatCard
+            Icon={UsersRound}
+            label="PARTICIPANTES"
+            value={demo ? "50" : "—"}
+            helper="Inscritos solo a evento · sin API"
+          />
+          <StatCard
+            Icon={UsersRound}
+            label="PARTICIPANTES"
+            value={demo ? "25" : "—"}
+            helper="Inscritos a evento y hostal · sin API"
+          />
+        </div>
+        <section className="participants-panel">
+          <div className="filters-top">
+            <div className="filter-search">
+              <Search size={17} />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar participantes..."
+                aria-label="Buscar participantes"
+              />
+            </div>
+            <select
+              aria-label="Estado"
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+            >
+              <option value="TODOS">Estado: Todos</option>
+              <option value="ACTIVA">Activo</option>
+              <option value="INACTIVA">Inactivo</option>
+            </select>
+            <select
+              aria-label="Tipo de identificación"
+              value={tipo}
+              onChange={(e) => setTipo(e.target.value)}
+            >
+              <option value="TODOS">Tipo de identificación</option>
+              {Object.entries(idLabel).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+            <button
+              className="blue-button"
+              onClick={() => navigate("/participantes/nuevo")}
+            >
+              <Plus size={16} /> Registrar Participante
+            </button>
+          </div>
+          <div className="search-extended">
+            <label>
+              Nombre
+              <input
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                placeholder="Buscar por nombre"
+              />
+            </label>
+            <label>
+              Número de identificación
+              <input
+                value={identificacion}
+                onChange={(e) => setIdentificacion(e.target.value)}
+                placeholder="Ej. NI-204831"
+              />
+            </label>
+            <label>
+              Correo
+              <input
+                value={correo}
+                onChange={(e) => setCorreo(e.target.value)}
+                type="search"
+                placeholder="nombre@correo.com"
+              />
+            </label>
+          </div>
+          {peopleError && !demo && <Banner kind="error">{peopleError}</Banner>}
+          <div className="data-table-wrap">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Nombre completo</th>
+                  <th>Identificación</th>
+                  <th>Correo</th>
+                  <th>Teléfono</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {peopleLoading ? (
+                  <tr>
+                    <td colSpan={7} className="table-empty">
+                      Cargando participantes…
+                    </td>
+                  </tr>
+                ) : rows.length ? (
+                  rows.map((p) => (
+                    <tr key={p._id}>
+                      <td className="code-cell">{personCode(p)}</td>
+                      <td>{fullName(p)}</td>
+                      <td>{personCode(p)}</td>
+                      <td>{p.correo || "—"}</td>
+                      <td>{p.telefono || "—"}</td>
+                      <td>
+                        <PersonBadge estado={p.estado} />
+                      </td>
+                      <td className="table-actions">
+                        <button
+                          onClick={() =>
+                            navigate(`/participantes/${p._id}/editar`)
+                          }
+                        >
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => navigate(`/participantes/${p._id}`)}
+                        >
+                          Ver
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={7} className="table-empty">
+                      No se encontraron participantes con esos filtros.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          <div className="table-bottom">
+            <span>
+              {rows.length} de {items.length} participantes{" "}
+              {demo && "· ejemplos"}
+            </span>
+            <button onClick={refresh} className="ghost-button">
+              <RefreshCw size={15} /> Actualizar
+            </button>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
 }
