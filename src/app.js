@@ -1,7 +1,10 @@
 import express from 'express';
 import cors from 'cors';
 import personaRoutes from './routes/persona.routes.js';
-
+import usuariosRoutes from './routes/usuarios.routes.js';
+import categoriaEmpleadoRoutes from './routes/categoriaEmpleado.routes.js';
+import empleadoRoutes from './routes/empleado.routes.js';
+import actividadRoutes from './routes/actividad.routes.js';
 const app = express();
 
 // Middlewares
@@ -20,5 +23,9 @@ app.get('/api/health', (req, res) => {
 
 //rutas de la api
 app.use('/api/personas', personaRoutes);
+app.use('/api/usuarios', usuariosRoutes);
+app.use('/api/categorias-empleado', categoriaEmpleadoRoutes);
+app.use('/api/empleados', empleadoRoutes);
+app.use('/api/actividades', actividadRoutes);
 
 export default app;
