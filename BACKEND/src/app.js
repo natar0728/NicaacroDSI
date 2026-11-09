@@ -5,7 +5,7 @@ import usuariosRoutes from './routes/usuarios.routes.js';
 import categoriaEmpleadoRoutes from './routes/categoriaEmpleado.routes.js';
 import empleadoRoutes from './routes/empleado.routes.js';
 import actividadRoutes from './routes/actividad.routes.js';
-
+import authRoutes from './routes/auth.routes.js'
 
 //rutas Cinthia
 import eventosRoutes from './routes/eventos.routes.js';
@@ -14,6 +14,10 @@ import asignacionesActividadRoutes from './routes/asignacionesActividad.routes.j
 import habitacionesRoutes from './routes/habitaciones.routes.js';
 import reservacionesRoutes from './routes/reservaciones.routes.js';
 const app = express();
+
+const {
+  verificarToken
+} = require('./middlewares/auth.middleware');
 
 // Middlewares
 app.use(cors()); //cors es para configurar el acceso para que consuman la API
@@ -41,6 +45,9 @@ app.use('/api/inscripciones', inscripcionesRoutes);
 app.use('/api/asignacionesActividad', asignacionesActividadRoutes);
 app.use('/api/habitaciones', habitacionesRoutes);
 app.use('/api/reservaciones', reservacionesRoutes);
-
+// Login público y consulta protegida de sesión
+app.use('/api/auth', authRoutes);
+// Proteger las siguientes rutas
+app.use('/api', verificarToken);
 
 export default app;
