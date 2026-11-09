@@ -1,6 +1,10 @@
 
 import { useEffect, useState, useCallback } from 'react';
-import { api } from './api/client';
+import {
+  api,
+  obtenerToken,
+  borrarToken
+} from './api/client';
 import { examplePeople } from './data/demo';
 
 import Layout from './components/Layout';
@@ -38,6 +42,11 @@ export default function App() {
   const [online, setOnline] = useState(null);
   const [toast, setToast] = useState('');
   const [preview, setPreview] = useState(false);
+  const [usuario, setUsuario] = useState(null);
+
+  const [verificandoSesion, setVerificandoSesion] = useState(
+  () => Boolean(obtenerToken())
+);
 
   // Navegación
   const navigate = useCallback((to) => {
@@ -45,6 +54,16 @@ export default function App() {
     setPath(currentPath());
     window.scrollTo({ top: 0, behavior: 'auto' });
   }, []);
+  const cerrarSesion = useCallback(() => {
+  borrarToken();
+
+  setUsuario(null);
+  setPeople([]);
+  setPeopleError('');
+  setPreview(false);
+
+  navigate('/login');
+}, [navigate]);
 
   // Detectar cambios del historial
   useEffect(() => {
@@ -56,6 +75,99 @@ export default function App() {
       window.removeEventListener('popstate', handle);
     };
   }, []);
+
+  // Escuchar cuando el cliente detecta una sesión inválida.
+useEffect(() => {
+  window.addEventListener(
+    'nicaacro:sesion-finalizada',
+    cerrarSesion
+  );
+
+  return () => {
+    window.removeEventListener(
+      'nicaacro:sesion-finalizada',
+      cerrarSesion
+    );
+  };
+}, [cerrarSesion]);
+
+// Comprobar la sesión si ya existe un token al recargar.
+useEffect(() => {
+  if (!obtenerToken()) return;
+
+  let active = true;
+
+  api.auth.me()
+    .then((usuarioActual) => {
+      if (active) {
+        setUsuario(usuarioActual);
+      }
+    })
+    .catch(() => {
+      if (active) {
+        borrarToken();
+        setUsuario(null);
+      }
+    })
+    .finally(() => {
+      if (active) {
+        setVerificandoSesion(false);
+      }
+    });
+
+  return () => {
+    active = false;
+  };
+}, []);
+
+// Evitar el acceso directo a las pantallas privadas sin sesión.
+useEffect(() => {
+  let active = true;
+
+  // Consultar participantes únicamente cuando exista una sesión.
+  if (usuario) {
+    fetchPeople()
+      .then((result) => {
+        if (!active) return;
+
+        setPeople(result);
+        setPeopleError('');
+      })
+      .catch((error) => {
+        if (!active) return;
+
+        setPeople([]);
+
+        setPeopleError(
+          error instanceof Error
+            ? error.message
+            : String(error)
+        );
+      })
+      .finally(() => {
+        if (active) {
+          setPeopleLoading(false);
+        }
+      });
+  }
+
+  // La ruta health continúa siendo pública.
+  api.health()
+    .then(() => {
+      if (active) {
+        setOnline(true);
+      }
+    })
+    .catch(() => {
+      if (active) {
+        setOnline(false);
+      }
+    });
+
+  return () => {
+    active = false;
+  };
+}, [usuario]);
 
   // Actualización manual de participantes
   const refresh = useCallback(async () => {
@@ -78,9 +190,11 @@ export default function App() {
 
   // Carga inicial sin actualizar estado
   // sincrónicamente dentro del efecto
-  useEffect(() => {
-    let active = true;
+ useEffect(() => {
+  let active = true;
 
+  // Consultar participantes únicamente cuando exista una sesión.
+  if (usuario) {
     fetchPeople()
       .then((result) => {
         if (!active) return;
@@ -92,8 +206,11 @@ export default function App() {
         if (!active) return;
 
         setPeople([]);
+
         setPeopleError(
-          error instanceof Error ? error.message : String(error)
+          error instanceof Error
+            ? error.message
+            : String(error)
         );
       })
       .finally(() => {
@@ -101,21 +218,25 @@ export default function App() {
           setPeopleLoading(false);
         }
       });
+  }
 
-    // Verificar conexión con el backend
-    api.health()
-      .then(() => {
-        if (active) setOnline(true);
-      })
-      .catch(() => {
-        if (active) setOnline(false);
-      });
+  // La ruta health continúa siendo pública.
+  api.health()
+    .then(() => {
+      if (active) {
+        setOnline(true);
+      }
+    })
+    .catch(() => {
+      if (active) {
+        setOnline(false);
+      }
+    });
 
-    return () => {
-      active = false;
-    };
-  }, []);
-
+  return () => {
+    active = false;
+  };
+}, [usuario]);
   // Modo de demostración
   const demo = preview || Boolean(peopleError);
   const visiblePeople = demo ? examplePeople : people;
@@ -131,21 +252,34 @@ export default function App() {
     preview,
     setPreview,
     refresh,
+    cerrarSesion,
     notify: setToast
   };
 
   let page;
   let title = 'NicaAcro';
+  if (verificandoSesion) {
+  return <p>Comprobando sesión...</p>;
+}
 
   // Pantallas públicas
   if (path === '/') {
     return <Welcome navigate={navigate} />;
   }
 
-  if (path === '/login') {
-    return <Login navigate={navigate} />;
-  }
+if (path === '/login' || !usuario) {
+  return (
+    <Login
+      onLogin={(usuarioActual) => {
+        setPeopleLoading(true);
+        setPeopleError('');
+        setUsuario(usuarioActual);
 
+        navigate('/menu');
+      }}
+    />
+  );
+}
   // Menú principal
   if (path === '/menu') {
     page = <AdminHome navigate={navigate} />;

@@ -1,21 +1,20 @@
+import { Router } from 'express';
 
-const express = require('express');
-
-const router = express.Router();
-
-const {
+import {
   login,
   miPerfil
-} = require('../controllers/auth.controller');
+} from '../controllers/auth.controller.js';
 
-const {
+import {
   verificarToken
-} = require('../middlewares/auth.middleware');
+} from '../middlewares/auth.middleware.js';
 
-// Ruta pública para iniciar sesión
+const router = Router();
+
+// Ruta pública: recibe usuario y contraseña.
 router.post('/login', login);
 
-// Ruta protegida para validar la sesión
+// Ruta protegida: devuelve los datos del usuario autenticado.
 router.get('/me', verificarToken, miPerfil);
 
-module.exports = router;
+export default router;
