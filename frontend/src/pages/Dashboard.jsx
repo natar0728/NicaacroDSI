@@ -1,143 +1,18 @@
-import React from "react";
-import {
-  CalendarDays,
-  CalendarCheck2,
-  CheckCheck,
-  ArrowRight,
-  UsersRound,
-  BedDouble,
-} from "lucide-react";
-import { StatCard, Banner } from "../components/UI";
-import { exampleEvents } from "../data/demo";
-const distribution = [
-  ["Lun", 63, 37],
-  ["Mar", 58, 42],
-  ["Mié", 73, 27],
-  ["Jue", 57, 43],
-  ["Vie", 68, 32],
-  ["Sáb", 76, 24],
-  ["Dom", 66, 34],
-];
-export default function Dashboard({ navigate, people, demo, peopleLoading }) {
-  return (
-    <div className="dashboard-screen">
-      <div className="breadcrumb">
-        Dashboard / <strong>Panel de control</strong>
-      </div>
-      <h2 className="content-title">Dashboard</h2>
-      <p className="content-subtitle">
-        Consulta el estado general del festival y los recursos disponibles.
-      </p>
-      <div className="dashboard-stats">
-        <StatCard
-          Icon={CalendarDays}
-          label="EVENTOS PLANIFICADOS"
-          value="12"
-          helper="Datos de ejemplo · sin API"
-        />
-        <StatCard
-          Icon={CalendarCheck2}
-          label="EVENTOS ACTIVOS"
-          value="3"
-          helper="Datos de ejemplo · sin API"
-        />
-        <StatCard
-          Icon={CheckCheck}
-          label="EVENTOS FINALIZADOS"
-          value="8"
-          helper="Datos de ejemplo · sin API"
-        />
-      </div>
-      <Banner>
-        Los indicadores de eventos y alojamiento corresponden a la maqueta. El
-        backend proporcionado aún no dispone de estas colecciones.
-      </Banner>
-      <section className="white-panel dashboard-chart">
-        <div className="section-heading">
-          <div>
-            <h3>Inscripciones por modalidad</h3>
-            <p>Distribución visual de ejemplo por día</p>
-          </div>
-          <div className="legend">
-            <span>
-              <i style={{ background: "#9fcb63" }} />
-              Anticipado
-            </span>
-            <span>
-              <i style={{ background: "#0879ba" }} />
-              Walk-in
-            </span>
-          </div>
-        </div>
-        <div
-          className="bar-chart"
-          role="img"
-          aria-label="Gráfico de ejemplo con inscripciones por modalidad"
-        >
-          <div className="chart-bars">
-            {distribution.map(([day, green, blue]) => (
-              <div className="bar-column" key={day}>
-                <div className="bar-stack">
-                  <div className="bar-cap" />
-                  <div className="bar-blue" style={{ height: `${blue}%` }} />
-                  <div className="bar-green" style={{ height: `${green}%` }} />
-                </div>
-                <small>{day}</small>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-      <section className="white-panel room-panel">
-        <h3>Resumen de alojamiento</h3>
-        <p>Estado visual de reservas y ocupación · ejemplo</p>
-        <div className="room-grid">
-          <StatCard
-            label="RESERVACIONES CONFIRMADAS"
-            value="42"
-            helper="Dato de la maqueta"
-          />
-          <StatCard
-            label="HABITACIONES OCUPADAS"
-            value="38"
-            helper="Dato de la maqueta"
-          />
-        </div>
-      </section>
-      <div className="dashboard-bottom">
-        <div className="white-panel mini-panel">
-          <h3>Participantes del sistema</h3>
-          <div className="real-stat">
-            <strong>
-              {peopleLoading
-                ? "…"
-                : people.filter((p) => p.tipoPersona === "PARTICIPANTE").length}
-            </strong>
-            <span>
-              {demo ? "Personas de ejemplo" : "Registros obtenidos de la API"}
-            </span>
-          </div>
-          <button
-            className="outline-button"
-            onClick={() => navigate("/participantes")}
-          >
-            Ver participantes <ArrowRight size={15} />
-          </button>
-        </div>
-        <div className="white-panel mini-panel">
-          <h3>Evento destacado</h3>
-          <p>{exampleEvents[0].nombre}</p>
-          <span className="caption">
-            {exampleEvents[0].codigo} · Vista de ejemplo
-          </span>
-          <button
-            className="outline-button"
-            onClick={() => navigate("/eventos/demo-event-1")}
-          >
-            Ver detalle del evento <ArrowRight size={15} />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+import { useState } from 'react';
+import { PageTitle, Problem, Stats, Field, Notice } from '../components/Common';
+import { fold, localDate, roomReservations } from '../lib/format';
+export default function Dashboard({ data, errors, loading, navigate }) {
+  const [search,setSearch]=useState('');const [error,setError]=useState('');
+  const count=(state)=>data.eventos.filter(e=>e.estado===state).length;
+  const today=localDate(), tomorrow=(()=>{const d=new Date();d.setDate(d.getDate()+1);return localDate(d)})();
+  const available=data.habitaciones.filter(r=>r.estado==='DISPONIBLE'&&roomReservations(data.reservaciones,r._id,today,tomorrow).length<r.capacidad).length;
+  const days=Array.from({length:7},(_,i)=>{const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()-(6-i));return {date:localDate(d),label:new Intl.DateTimeFormat('es-NI',{weekday:'short'}).format(d),pre:0,walk:0}});
+  data.inscripciones.forEach(i=>{const when=new Date(i.createdAt);const d=Number.isNaN(when.getTime())?null:days.find(x=>x.date===localDate(when));if(d){if(i.origenRegistro==='WALK_IN')d.walk++;else if(i.origenRegistro==='PRE_REGISTRO')d.pre++}});
+  const max=Math.max(1,...days.map(d=>d.pre+d.walk));
+  function findEvent(e){e.preventDefault();const q=fold(search.trim());if(!q){setError('Escriba el código o nombre de un evento.');return}const exact=data.eventos.find(x=>fold(x.codigo)===q);const matches=data.eventos.filter(x=>fold(`${x.codigo} ${x.nombre}`).includes(q));const event=exact|| (matches.length===1?matches[0]:null);if(event){setError('');navigate(`/eventos/${event._id}`)}else setError(matches.length>1?'Hay varios eventos con ese nombre. Busque por código.':'No se encontró el evento.');}
+  return <div className="nx-page"><PageTitle title="Dashboard" description="Resumen general de eventos, inscripciones y alojamiento."/><Problem errors={errors} keys={['eventos','inscripciones','habitaciones','reservaciones']} loading={loading}/><form className="nx-toolbar nx-card" onSubmit={findEvent}><Field label="Buscar evento"><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Código o nombre"/></Field><button className="nx-primary">Buscar</button></form>{error&&<Notice error>{error}</Notice>}
+    <Stats items={[{label:'Eventos planificados',value:errors.eventos?'—':count('PLANIFICADO')},{label:'Eventos en curso',value:errors.eventos?'—':count('EN_CURSO')},{label:'Eventos finalizados',value:errors.eventos?'—':count('FINALIZADO')}]}/>
+    <section className="nx-card"><div className="nx-heading"><div><h3>Inscripciones por modalidad de registro</h3><p>Últimos siete días · cantidad de inscripciones creadas</p></div><div className="nx-legend"><span>● Anticipado</span><span>● Walk-in</span></div></div>{errors.inscripciones?<Notice error>No se pudo calcular el gráfico.</Notice>:<div className="nx-chart" aria-label="Inscripciones de los últimos siete días">{days.map(d=><div className="nx-chart-day" key={d.date} title={`${d.date}: ${d.pre} anticipadas y ${d.walk} walk-in`}><strong>{d.pre+d.walk}</strong><div className="nx-chart-bars"><i style={{height:`${(d.pre/max)*100}%`}}/><b style={{height:`${(d.walk/max)*100}%`}}/></div><small>{d.label}</small></div>)}</div>}</section>
+    <section className="nx-card"><h3>Resumen de alojamiento</h3><p className="nx-muted">Disponibilidad calculada para hoy a partir de reservaciones pendientes y confirmadas.</p><Stats items={[{label:'Reservaciones confirmadas',value:errors.reservaciones?'—':data.reservaciones.filter(r=>r.estado==='CONFIRMADA').length},{label:'Habitaciones con cupo hoy',value:errors.habitaciones||errors.reservaciones?'—':available}]}/></section>
+  </div>;
 }
