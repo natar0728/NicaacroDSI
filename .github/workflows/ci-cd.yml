@@ -1,0 +1,150 @@
+name: CI-CD NicaAcro - GHCR y Render
+
+on:
+  push:
+    branches: [DOCKERCICD]
+
+  pull_request:
+    branches: [main, DOCKERCICD]
+
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-test-push:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Descargar el codigo
+        uses: actions/checkout@v4
+
+      - name: Preparar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Probar frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run lint
+          npm run build
+          npm test
+
+      - name: Probar backend
+        working-directory: BACKEND
+        run: |
+          npm ci
+          npm test
+
+      - name: Construir imagen
+        run: docker build --platform linux/amd64 -t nicaacro:test .
+
+      - name: Probar contenedor con MongoDB temporal
+        run: |
+          docker network create nicaacro-ci
+
+          docker run -d \
+            --name mongo-ci \
+            --network nicaacro-ci \
+            mongo:7.0
+
+          for intento in $(seq 1 60); do
+            if docker exec mongo-ci mongosh --quiet \
+              --eval "db.adminCommand({ping:1}).ok" | grep -q 1; then
+              break
+            fi
+
+            sleep 2
+          done
+
+          docker exec mongo-ci mongosh --quiet \
+            --eval "db.adminCommand({ping:1}).ok" | grep -q 1
+
+          docker run -d \
+            --name nicaacro-ci \
+            --network nicaacro-ci \
+            -p 8080:3000 \
+            -e PORT=3000 \
+            -e MONGODB_URI=mongodb://mongo-ci:27017/nicaacro_ci \
+            -e JWT_SECRET=secreto-exclusivo-para-prueba-ci \
+            nicaacro:test
+
+          for intento in $(seq 1 40); do
+            if curl --fail --silent \
+              http://localhost:8080/api/health > /dev/null; then
+              break
+            fi
+
+            sleep 2
+          done
+
+          curl --fail --silent \
+            http://localhost:8080/api/health
+
+          curl --fail --silent \
+            http://localhost:8080/ | grep -q '<div id="root"></div>'
+
+      - name: Mostrar logs si falla
+        if: failure()
+        run: |
+          docker logs nicaacro-ci || true
+          docker logs mongo-ci || true
+
+      - name: Iniciar sesion en GHCR
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/DOCKERCICD'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Calcular etiquetas
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/DOCKERCICD'
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+            type=sha
+
+      - name: Publicar imagen en GHCR
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/DOCKERCICD'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  deploy-render:
+    needs: build-test-push
+
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/DOCKERCICD'
+
+    runs-on: ubuntu-latest
+
+    env:
+      RENDER_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+
+    steps:
+      - name: Informar si falta el hook
+        if: env.RENDER_HOOK == ''
+        run: |
+          echo "Imagen publicada."
+          echo "Configure RENDER_DEPLOY_HOOK_URL para activar el despliegue."
+
+      - name: Solicitar despliegue en Render
+        if: env.RENDER_HOOK != ''
+        run: |
+          curl --fail --silent --show-error \
+            -X POST "$RENDER_HOOK" > /dev/null
