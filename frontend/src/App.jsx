@@ -15,6 +15,8 @@ import { Activities, Assignment } from './pages/Activities';
 import Schedule from './pages/Schedule';
 import { Staff, StaffForm } from './pages/Staff';
 import { Rooms, Reservations, LodgingCheckIn } from './pages/Lodging';
+import Administration from './pages/Administration';
+import Reports from './pages/Reports';
 
 function locationNow() { return { path: decodeURIComponent(window.location.pathname).replace(/\/+$/, '') || '/', search: window.location.search }; }
 export default function App() {
@@ -53,6 +55,8 @@ export default function App() {
   else if (path === '/alojamiento') { title = 'Alojamiento'; page = <Rooms {...common} /> }
   else if (path === '/reservaciones') { title = 'Reservaciones'; page = <Reservations {...common} key={location.search} /> }
   else if (path === '/checkin') { title = 'Check-in / Check-out'; page = <LodgingCheckIn {...common} /> }
+  else if (path === '/reportes') { title = 'Reportes'; page = <Reports {...common} /> }
+  else if (path === '/administracion' && usuario.rol === 'ADMINISTRADOR') { title = 'Usuarios'; page = <Administration {...common} /> }
   else { title = 'Página no encontrada'; page = <div className="nx-page"><p>No se encontró esta pantalla.</p><button className="nx-secondary" onClick={() => navigate('/dashboard')}>Ir al dashboard</button></div> }
-  return <Layout navigate={navigate} title={title} active={path} usuario={usuario} cerrarSesion={cerrarSesion}>{toast && <div className="nx-toast" role="status">{toast}<button onClick={() => setToast('')} aria-label="Cerrar">×</button></div>}{page}</Layout>;
+  return <Layout navigate={navigate} title={title} active={path} usuario={usuario} eventos={data.eventos} errores={errors} cerrarSesion={cerrarSesion}>{toast && <div className="nx-toast" role="status">{toast}<button onClick={() => setToast('')} aria-label="Cerrar">×</button></div>}{page}</Layout>;
 }

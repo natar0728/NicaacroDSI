@@ -211,6 +211,10 @@ export const actualizarUsuario = async (req, res) => {
 
     const { nombreUsuario, password, rol, estado } = req.body;
 
+    if (req.usuario?.id === req.params.id && ((rol !== undefined && rol !== 'ADMINISTRADOR') || (estado !== undefined && estado !== 'ACTIVO'))) {
+      return res.status(400).json({ success: false, message: 'No puede desactivar ni cambiar el rol de su propia cuenta.' });
+    }
+
     if (nombreUsuario !== undefined) {
       if (typeof nombreUsuario !== 'string') {
         return res.status(400).json({
@@ -264,6 +268,8 @@ export const eliminarUsuario = async (req, res) => {
         message: 'ID de usuario no válido.'
       });
     }
+
+    if (req.usuario?.id === req.params.id) return res.status(400).json({ success: false, message: 'No puede eliminar su propia cuenta.' });
 
     const usuario = await Usuario.findByIdAndDelete(
       req.params.id

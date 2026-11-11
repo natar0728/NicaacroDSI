@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
-import Inscripcion from '../models/inscripciones.model.js'; 
+import Inscripcion from '../models/inscripciones.model.js';
+import Persona from '../models/persona.model.js';
+import Evento from '../models/eventos.model.js'; 
 
 // Manejo centralizado de errores del módulo
 const manejarError = (error, res) => {
@@ -80,6 +82,12 @@ export const obtenerInscripcionPorId = async (req, res) => {
 // POST /api/inscripciones
 export const crearInscripcion = async (req, res) => {
   try {
+    const { personaId, eventoId } = req.body || {};
+    if (!idValido(personaId) || !idValido(eventoId)) return res.status(400).json({ success: false, message: 'Seleccione una persona y un evento válidos.' });
+    const [persona, evento, existente] = await Promise.all([Persona.findById(personaId), Evento.findById(eventoId), Inscripcion.findOne({ personaId, eventoId })]);
+    if (!persona || persona.tipoPersona !== 'PARTICIPANTE' || persona.estado !== 'ACTIVA') return res.status(400).json({ success: false, message: 'La persona debe ser un participante activo.' });
+    if (!evento || !['PLANIFICADO', 'EN_CURSO'].includes(evento.estado)) return res.status(400).json({ success: false, message: 'El evento debe estar planificado o en curso.' });
+    if (existente) return res.status(409).json({ success: false, message: 'Esta persona ya está inscrita en el evento.' });
     const inscripcion = await Inscripcion.create(req.body);
 
     return res.status(201).json({
@@ -114,6 +122,7 @@ export const actualizarInscripcion = async (req, res) => {
       });
     }
 
+    if (datos.personaId !== undefined || datos.eventoId !== undefined) return res.status(400).json({ success: false, message: 'No se puede cambiar la persona o el evento de una inscripción existente.' });
     inscripcion.set(datos);
     await inscripcion.save();
 

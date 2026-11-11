@@ -109,7 +109,8 @@ const tieneUsuarioActivo = async (empleadoId) => {
 // GET /api/empleados
 export const obtenerEmpleados = async (req, res) => {
   try {
-    const empleados = await Empleado.find()
+    const filtro = req.usuario?.rol === 'STAFF' ? { _id: req.usuario.empleadoId } : {};
+    const empleados = await Empleado.find(filtro)
       .populate({
         path: 'personaId',
         select: 'tipoPersona primerNombre segundoNombre primerApellido segundoApellido tipoIdentificacion numeroIdentificacion correo telefono estado'

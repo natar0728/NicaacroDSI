@@ -876,7 +876,7 @@ a {
   min-height: calc(100vh - 86px);
 }
 .participants-background {
-  background-image: url("/images/participants-poster.svg");
+  background-image: url("/images/participants-poster.jpg");
   background-size: cover;
   background-position: center;
   min-height: calc(100vh - 86px);
