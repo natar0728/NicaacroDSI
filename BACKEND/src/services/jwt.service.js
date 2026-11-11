@@ -1,23 +1,18 @@
 import jwt from 'jsonwebtoken';
 
-// Crear un token para el usuario que inició sesión.
 export function generarToken(usuario) {
-  return jwt.sign(
-    {
-      tipo: 'access'
-    },
-    process.env.JWT_SECRET,
-    {
-      subject: usuario._id.toString(),
-      expiresIn: '1h',
-      algorithm: 'HS256'
-    }
-  );
+  return jwt.sign({ tipo: 'access' }, process.env.JWT_SECRET, {
+    subject: usuario._id.toString(),
+    expiresIn: process.env.JWT_EXPIRES_IN || '1h',
+    algorithm: 'HS256',
+    ...(process.env.JWT_ISSUER ? { issuer: process.env.JWT_ISSUER } : {}),
+    ...(process.env.JWT_AUDIENCE ? { audience: process.env.JWT_AUDIENCE } : {})
+  });
 }
-
-// Comprobar la firma y la vigencia del token.
 export function validarToken(token) {
   return jwt.verify(token, process.env.JWT_SECRET, {
-    algorithms: ['HS256']
+    algorithms: ['HS256'],
+    ...(process.env.JWT_ISSUER ? { issuer: process.env.JWT_ISSUER } : {}),
+    ...(process.env.JWT_AUDIENCE ? { audience: process.env.JWT_AUDIENCE } : {})
   });
 }

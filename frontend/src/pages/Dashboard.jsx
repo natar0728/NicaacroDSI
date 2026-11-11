@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { PageTitle, Problem, Stats, Field, Notice } from '../components/Common';
-import { fold, localDate, roomReservations } from '../lib/format';
+import { fold, localDate, peakRoomOccupancy } from '../lib/format';
 export default function Dashboard({ data, errors, loading, navigate }) {
   const [search,setSearch]=useState('');const [error,setError]=useState('');
   const count=(state)=>data.eventos.filter(e=>e.estado===state).length;
   const today=localDate(), tomorrow=(()=>{const d=new Date();d.setDate(d.getDate()+1);return localDate(d)})();
-  const available=data.habitaciones.filter(r=>r.estado==='DISPONIBLE'&&roomReservations(data.reservaciones,r._id,today,tomorrow).length<r.capacidad).length;
+  const available=data.habitaciones.filter(r=>r.estado==='DISPONIBLE'&&peakRoomOccupancy(data.reservaciones,r._id,today,tomorrow)<r.capacidad).length;
   const days=Array.from({length:7},(_,i)=>{const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()-(6-i));return {date:localDate(d),label:new Intl.DateTimeFormat('es-NI',{weekday:'short'}).format(d),pre:0,walk:0}});
   data.inscripciones.forEach(i=>{const when=new Date(i.createdAt);const d=Number.isNaN(when.getTime())?null:days.find(x=>x.date===localDate(when));if(d){if(i.origenRegistro==='WALK_IN')d.walk++;else if(i.origenRegistro==='PRE_REGISTRO')d.pre++}});
   const max=Math.max(1,...days.map(d=>d.pre+d.walk));

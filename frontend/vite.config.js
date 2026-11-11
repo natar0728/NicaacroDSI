@@ -4,5 +4,5 @@ import process from 'node:process';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
-  return { plugins: [react()], server: { proxy: { '/api': env.VITE_PROXY_TARGET || 'http://localhost:5000' } } };
+  return { plugins: [react()], server: { proxy: { '/api': env.VITE_PROXY_TARGET || 'http://localhost:3000' } } };
 });

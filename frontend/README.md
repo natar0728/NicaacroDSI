@@ -1,16 +1,7 @@
-# React + Vite
+# Frontend de NicaAcro
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Consulte el archivo `README.md` de la carpeta principal para configurar la API, MongoDB e iniciar el proyecto completo.
 
-Currently, two official plugins are available:
+En esta carpeta puede ejecutar `npm ci` y después `npm run dev`. Por defecto, Vite envía `/api` al backend en `http://localhost:3000`. Para cambiar el destino, use `VITE_PROXY_TARGET` en `frontend/.env.local` y reinicie Vite.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Comprobaciones disponibles: `npm run build`, `npm run lint` y `npm test`. Las pruebas usan respuestas simuladas; no escriben en MongoDB.

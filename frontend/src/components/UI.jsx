@@ -1,5 +1,4 @@
-import React from 'react';
-import {Search,AlertTriangle,CheckCircle2,Info,ChevronLeft} from 'lucide-react';
+import {Search,Info,ChevronLeft} from 'lucide-react';
 export const StatCard=({label,value,helper,Icon})=><div className="stat-card"><div className="stat-label">{label} {Icon&&<Icon size={21}/>}</div><strong>{value}</strong><small>{helper}</small></div>;
 export const Banner=({children,kind='info'})=><div role="status" className={`message ${kind}`}><Info size={17}/><span>{children}</span></div>;
 export const Back=({navigate,to='/participantes',children='Regresar'})=><button className="back-btn" onClick={()=>navigate(to)}><ChevronLeft size={16}/>{children}</button>;

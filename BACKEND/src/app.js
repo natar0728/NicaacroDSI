@@ -43,25 +43,37 @@ app.use('/api/auth', authRoutes);
 // requieren un token válido.
 app.use('/api', verificarToken);
 
-// Rutas protegidas.
-app.use('/api/personas', personaRoutes);
+// El personal consulta únicamente su propio cronograma. Las operaciones de
+// gestión quedan para organizadores y administradores.
+const gestion = permitirRoles('ADMINISTRADOR', 'ORGANIZADOR');
+const lecturaStaff = (req, res, next) => {
+  if (req.usuario.rol === 'STAFF' && req.method !== 'GET') {
+    return res.status(403).json({ success: false, message: 'No tiene permisos para modificar este recurso.' });
+  }
+  return next();
+};
+const soloListaStaff = (req, res, next) => {
+  if (req.usuario.rol === 'STAFF' && (req.method !== 'GET' || req.path !== '/')) {
+    return res.status(403).json({ success: false, message: 'No tiene permisos para acceder a este recurso.' });
+  }
+  return next();
+};
+app.use('/api/personas', gestion, personaRoutes);
+app.use('/api/usuarios', permitirRoles('ADMINISTRADOR'), usuariosRoutes);
+app.use('/api/categorias-empleado', gestion, categoriaEmpleadoRoutes);
+app.use('/api/empleados', soloListaStaff, empleadoRoutes);
+app.use('/api/actividades', lecturaStaff, actividadRoutes);
+app.use('/api/eventos', lecturaStaff, eventosRoutes);
+app.use('/api/inscripciones', gestion, inscripcionesRoutes);
+app.use('/api/asignacionesActividad', soloListaStaff, asignacionesActividadRoutes);
+app.use('/api/habitaciones', gestion, habitacionesRoutes);
+app.use('/api/reservaciones', gestion, reservacionesRoutes);
 
-// Solo ADMINISTRADOR puede consultar o modificar cuentas de usuario.
-app.use(
-  '/api/usuarios',
-  permitirRoles('ADMINISTRADOR'),
-  usuariosRoutes
-);
-
-app.use('/api/categorias-empleado', categoriaEmpleadoRoutes);
-app.use('/api/empleados', empleadoRoutes);
-app.use('/api/actividades', actividadRoutes);
-
-// Rutas de Cinthia.
-app.use('/api/eventos', eventosRoutes);
-app.use('/api/inscripciones', inscripcionesRoutes);
-app.use('/api/asignacionesActividad', asignacionesActividadRoutes);
-app.use('/api/habitaciones', habitacionesRoutes);
-app.use('/api/reservaciones', reservacionesRoutes);
-
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    return res.status(400).json({ success: false, message: 'El JSON de la solicitud no es válido.' });
+  }
+  console.error('Error en la solicitud:', err.message);
+  return res.status(500).json({ success: false, message: 'Error interno del servidor.' });
+});
 export default app;

@@ -77,6 +77,9 @@ export const obtenerEventoPorId = async (req, res) => {
 // POST /api/eventos
 export const crearEvento = async (req, res) => {
   try {
+    if (!req.body?.fechaInicio || !req.body?.fechaFin || new Date(req.body.fechaFin) < new Date(req.body.fechaInicio)) {
+      return res.status(400).json({ success: false, message: 'La fecha de finalización debe ser igual o posterior a la fecha de inicio.' });
+    }
     const evento = await Evento.create(req.body);
 
     return res.status(201).json({
@@ -112,6 +115,7 @@ export const actualizarEvento = async (req, res) => {
     }
 
     evento.set(datos);
+    if (evento.fechaFin < evento.fechaInicio) return res.status(400).json({ success: false, message: 'La fecha de finalización debe ser igual o posterior a la fecha de inicio.' });
     await evento.save();
 
     return res.status(200).json({
