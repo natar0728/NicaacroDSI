@@ -1,18 +1,3 @@
-import React from "react";
 export default function Welcome({ navigate }) {
-  return (
-    <main className="splash">
-      <img
-        className="splash-image"
-        src="/images/referencia-inicio.png"
-        alt="Arte del Festival Play de NicaAcro"
-      />
-      <div className="splash-bottom">
-        <span>NICACRO · FESTIVAL PLAY</span>
-        <button onClick={() => navigate("/login")}>
-          Acceder al sistema <span aria-hidden="true">→</span>
-        </button>
-      </div>
-    </main>
-  );
+  return <main className="nx-splash"><button className="nx-splash-button" onClick={()=>navigate('/login')} aria-label="Ingresar al sistema NicaAcro"><span className="nx-splash-title">NICAACRO</span><span className="nx-splash-subtitle">FESTIVAL</span><strong>PLAY!</strong><small>HAGA CLIC PARA INGRESAR</small></button><span className="nx-splash-copyright">NICAACRO © 2026</span></main>;
 }

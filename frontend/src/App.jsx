@@ -1,409 +1,58 @@
-
-import { useEffect, useState, useCallback } from 'react';
-import {
-  api,
-  obtenerToken,
-  borrarToken
-} from './api/client';
-import { examplePeople } from './data/demo';
-
+import { useCallback, useEffect, useState } from 'react';
+import { api, borrarToken, obtenerToken } from './api/client';
+import { useCollections } from './hooks/useCollections';
 import Layout from './components/Layout';
 import Welcome from './pages/Welcome';
 import Login from './pages/Login';
 import AdminHome from './pages/AdminHome';
 import Dashboard from './pages/Dashboard';
-import EventDetail from './pages/EventDetail';
+import { Events, EventForm, EventDetail } from './pages/Events';
 import Participants from './pages/Participants';
-import PersonDetail from './pages/PersonDetail';
 import PersonForm from './pages/PersonForm';
 import Enrollment from './pages/Enrollment';
-import Administration from './pages/Administration';
-import Pending from './pages/Pending';
+import Attendance from './pages/Attendance';
+import { Activities, Assignment } from './pages/Activities';
+import Schedule from './pages/Schedule';
+import { Staff, StaffForm } from './pages/Staff';
+import { Rooms, Reservations, LodgingCheckIn } from './pages/Lodging';
 
-// Obtener la ruta actual
-function currentPath() {
-  return (
-    decodeURIComponent(window.location.pathname)
-      .replace(/\/+$/, '') || '/'
-  );
-}
-
-// Consultar participantes desde el backend
-async function fetchPeople() {
-  const result = await api.personas.list();
-  return Array.isArray(result) ? result : [];
-}
-
+function locationNow() { return { path: decodeURIComponent(window.location.pathname).replace(/\/+$/, '') || '/', search: window.location.search }; }
 export default function App() {
-  const [path, setPath] = useState(currentPath);
-  const [people, setPeople] = useState([]);
-  const [peopleLoading, setPeopleLoading] = useState(true);
-  const [peopleError, setPeopleError] = useState('');
-  const [online, setOnline] = useState(null);
-  const [toast, setToast] = useState('');
-  const [preview, setPreview] = useState(false);
-  const [usuario, setUsuario] = useState(null);
-
-  const [verificandoSesion, setVerificandoSesion] = useState(
-  () => Boolean(obtenerToken())
-);
-
-  // Navegación
-  const navigate = useCallback((to) => {
-    window.history.pushState({}, '', to);
-    setPath(currentPath());
-    window.scrollTo({ top: 0, behavior: 'auto' });
-  }, []);
-  const cerrarSesion = useCallback(() => {
-  borrarToken();
-
-  setUsuario(null);
-  setPeople([]);
-  setPeopleError('');
-  setPreview(false);
-
-  navigate('/login');
-}, [navigate]);
-
-  // Detectar cambios del historial
-  useEffect(() => {
-    const handle = () => setPath(currentPath());
-
-    window.addEventListener('popstate', handle);
-
-    return () => {
-      window.removeEventListener('popstate', handle);
-    };
-  }, []);
-
-  // Escuchar cuando el cliente detecta una sesión inválida.
-useEffect(() => {
-  window.addEventListener(
-    'nicaacro:sesion-finalizada',
-    cerrarSesion
-  );
-
-  return () => {
-    window.removeEventListener(
-      'nicaacro:sesion-finalizada',
-      cerrarSesion
-    );
-  };
-}, [cerrarSesion]);
-
-// Comprobar la sesión si ya existe un token al recargar.
-useEffect(() => {
-  if (!obtenerToken()) return;
-
-  let active = true;
-
-  api.auth.me()
-    .then((usuarioActual) => {
-      if (active) {
-        setUsuario(usuarioActual);
-      }
-    })
-    .catch(() => {
-      if (active) {
-        borrarToken();
-        setUsuario(null);
-      }
-    })
-    .finally(() => {
-      if (active) {
-        setVerificandoSesion(false);
-      }
-    });
-
-  return () => {
-    active = false;
-  };
-}, []);
-
-// Evitar el acceso directo a las pantallas privadas sin sesión.
-useEffect(() => {
-  let active = true;
-
-  // Consultar participantes únicamente cuando exista una sesión.
-  if (usuario) {
-    fetchPeople()
-      .then((result) => {
-        if (!active) return;
-
-        setPeople(result);
-        setPeopleError('');
-      })
-      .catch((error) => {
-        if (!active) return;
-
-        setPeople([]);
-
-        setPeopleError(
-          error instanceof Error
-            ? error.message
-            : String(error)
-        );
-      })
-      .finally(() => {
-        if (active) {
-          setPeopleLoading(false);
-        }
-      });
-  }
-
-  // La ruta health continúa siendo pública.
-  api.health()
-    .then(() => {
-      if (active) {
-        setOnline(true);
-      }
-    })
-    .catch(() => {
-      if (active) {
-        setOnline(false);
-      }
-    });
-
-  return () => {
-    active = false;
-  };
-}, [usuario]);
-
-  // Actualización manual de participantes
-  const refresh = useCallback(async () => {
-    setPeopleLoading(true);
-
-    try {
-      const result = await fetchPeople();
-
-      setPeople(result);
-      setPeopleError('');
-    } catch (error) {
-      setPeople([]);
-      setPeopleError(
-        error instanceof Error ? error.message : String(error)
-      );
-    } finally {
-      setPeopleLoading(false);
-    }
-  }, []);
-
-  // Carga inicial sin actualizar estado
-  // sincrónicamente dentro del efecto
- useEffect(() => {
-  let active = true;
-
-  // Consultar participantes únicamente cuando exista una sesión.
-  if (usuario) {
-    fetchPeople()
-      .then((result) => {
-        if (!active) return;
-
-        setPeople(result);
-        setPeopleError('');
-      })
-      .catch((error) => {
-        if (!active) return;
-
-        setPeople([]);
-
-        setPeopleError(
-          error instanceof Error
-            ? error.message
-            : String(error)
-        );
-      })
-      .finally(() => {
-        if (active) {
-          setPeopleLoading(false);
-        }
-      });
-  }
-
-  // La ruta health continúa siendo pública.
-  api.health()
-    .then(() => {
-      if (active) {
-        setOnline(true);
-      }
-    })
-    .catch(() => {
-      if (active) {
-        setOnline(false);
-      }
-    });
-
-  return () => {
-    active = false;
-  };
-}, [usuario]);
-  // Modo de demostración
-  const demo = preview || Boolean(peopleError);
-  const visiblePeople = demo ? examplePeople : people;
-
-  // Propiedades compartidas
-  const context = {
-    navigate,
-    people: visiblePeople,
-    peopleLoading,
-    peopleError,
-    online,
-    demo,
-    preview,
-    setPreview,
-    refresh,
-    cerrarSesion,
-    notify: setToast
-  };
-
-  let page;
-  let title = 'NicaAcro';
-  if (verificandoSesion) {
-  return <p>Comprobando sesión...</p>;
-}
-
-  // Pantallas públicas
-  if (path === '/') {
-    return <Welcome navigate={navigate} />;
-  }
-
-if (path === '/login' || !usuario) {
-  return (
-    <Login
-      onLogin={(usuarioActual) => {
-        setPeopleLoading(true);
-        setPeopleError('');
-        setUsuario(usuarioActual);
-
-        navigate('/menu');
-      }}
-    />
-  );
-}
-  // Menú principal
-  if (path === '/menu') {
-    page = <AdminHome navigate={navigate} />;
-    title = 'Menú administrador';
-  }
-
-  // Dashboard
-  else if (path === '/dashboard') {
-    page = <Dashboard {...context} />;
-    title = 'Dashboard';
-  }
-
-  // Participantes
-  else if (path === '/participantes') {
-    page = <Participants {...context} />;
-    title = 'Participantes';
-  }
-
-  // Registrar participante
-  else if (path === '/participantes/nuevo') {
-    page = <PersonForm {...context} mode="create" />;
-    title = 'Registrar persona';
-  }
-
-  // Editar participante
-  else if (/^\/participantes\/[^/]+\/editar$/.test(path)) {
-    page = (
-      <PersonForm
-        {...context}
-        mode="edit"
-        id={path.split('/')[2]}
-      />
-    );
-    title = 'Editar persona';
-  }
-
-  // Detalle participante
-  else if (/^\/participantes\/[^/]+$/.test(path)) {
-    page = (
-      <PersonDetail
-        {...context}
-        id={path.split('/')[2]}
-      />
-    );
-    title = 'Detalle participante';
-  }
-
-  // Inscripciones
-  else if (path === '/inscripciones') {
-    page = <Enrollment {...context} />;
-    title = 'Inscripciones';
-  }
-
-  // Detalle de evento
-  else if (/^\/eventos\/[^/]+$/.test(path)) {
-    page = (
-      <EventDetail
-        {...context}
-        id={path.split('/')[2]}
-      />
-    );
-    title = 'Detalle del evento';
-  }
-
-  // Administración
-  else if (path === '/administracion') {
-    page = <Administration {...context} />;
-    title = 'Administración';
-  }
-
-  // Eventos
-  else if (path === '/eventos') {
-    page = (
-      <Pending
-        title="Eventos y actividades"
-        detail="El backend no incluye un recurso de eventos. El detalle de evento es una vista de ejemplo, accesible desde Dashboard."
-        navigate={navigate}
-      />
-    );
-    title = 'Eventos y actividades';
-  }
-
-  // Otros módulos pendientes
-  else {
-    const names = {
-      '/asistencia': 'Check in / Check out',
-      '/cronograma': 'Visualizar cronograma',
-      '/staff': 'Staff',
-      '/alojamiento': 'Alojamiento',
-      '/reservaciones': 'Reservaciones',
-      '/reportes': 'Reportes'
-    };
-
-    title = names[path] || 'Página no encontrada';
-
-    page = (
-      <Pending
-        title={title}
-        navigate={navigate}
-      />
-    );
-  }
-
-  // Renderizar aplicación
-  return (
-    <Layout
-      {...context}
-      title={title}
-      active={path}
-    >
-      {toast && (
-        <div role="status" className="toast">
-          {toast}
-          <button
-            type="button"
-            aria-label="Cerrar aviso"
-            onClick={() => setToast('')}
-          >
-            ×
-          </button>
-        </div>
-      )}
-
-      {page}
-    </Layout>
-  );
+  const [location, setLocation] = useState(locationNow); const [usuario, setUsuario] = useState(null); const [checking, setChecking] = useState(() => Boolean(obtenerToken())); const [sessionError, setSessionError] = useState(''); const [toast, setToast] = useState(''); const [selectedEvent, setEvent] = useState(() => sessionStorage.getItem('nicaacro_evento') || '');
+  const { data, errors, loading, refresh, clear } = useCollections(usuario);
+  const navigate = useCallback((to) => { window.history.pushState({}, '', to); setLocation(locationNow()); window.scrollTo({ top: 0, behavior: 'auto' }); }, []);
+  const setSelectedEvent = useCallback((id) => { setEvent(id); if (id) sessionStorage.setItem('nicaacro_evento', id); else sessionStorage.removeItem('nicaacro_evento'); }, []);
+  const notify = useCallback((message) => { setToast(message); }, []);
+  const cerrarSesion = useCallback(() => { borrarToken(); setUsuario(null); clear(); setSelectedEvent(''); navigate('/login'); }, [clear, navigate, setSelectedEvent]);
+  useEffect(() => { const onPop = () => setLocation(locationNow()); window.addEventListener('popstate', onPop); return () => window.removeEventListener('popstate', onPop) }, []);
+  useEffect(() => { window.addEventListener('nicaacro:sesion-finalizada', cerrarSesion); return () => window.removeEventListener('nicaacro:sesion-finalizada', cerrarSesion) }, [cerrarSesion]);
+  useEffect(() => { if (!obtenerToken()) return; let active = true; api.auth.me().then(user => { if (active) setUsuario(user) }).catch(error => { if (active) { if (error.status === 401) borrarToken(); setSessionError(error.message) } }).finally(() => { if (active) setChecking(false) }); return () => { active = false } }, []);
+  useEffect(() => { if (!toast) return; const t = window.setTimeout(() => setToast(''), 4500); return () => window.clearTimeout(t) }, [toast]);
+  if (checking) return <div className="nx-loading">Comprobando sesión…</div>;
+  if (location.path === '/') return <Welcome navigate={navigate} />;
+  if (!usuario) return <><Login onLogin={(user) => { setSessionError(''); setUsuario(user); navigate('/menu') }} />{sessionError && <div className="nx-session-error" role="alert">{sessionError}</div>}</>;
+  const common = { data, errors, loading, refresh, navigate, notify, selectedEvent, setSelectedEvent, query: new URLSearchParams(location.search), usuario };
+  const path = location.path; let page, title;
+  if (usuario.rol === 'STAFF') { title = 'Mi cronograma'; page = <Schedule {...common} /> }
+  else if (path === '/login' || path === '/menu') { title = 'Menú principal'; page = <AdminHome navigate={navigate} /> }
+  else if (path === '/dashboard') { title = 'Dashboard'; page = <Dashboard {...common} /> }
+  else if (path === '/eventos') { title = 'Eventos'; page = <Events {...common} /> }
+  else if (path === '/eventos/nuevo') { title = 'Nuevo evento'; page = <EventForm {...common} /> }
+  else if (/^\/eventos\/[^/]+\/editar$/.test(path)) { title = 'Editar evento'; page = <EventForm {...common} id={path.split('/')[2]} /> }
+  else if (/^\/eventos\/[^/]+$/.test(path)) { title = 'Detalle del evento'; page = <EventDetail {...common} id={path.split('/')[2]} /> }
+  else if (path === '/participantes') { title = 'Participantes'; page = <Participants {...common} /> }
+  else if (path === '/personas/nueva' || path === '/participantes/nuevo') { title = 'Registrar persona'; page = <PersonForm {...common} /> }
+  else if (/^\/participantes\/[^/]+\/editar$/.test(path)) { title = 'Editar persona'; page = <PersonForm {...common} id={path.split('/')[2]} /> }
+  else if (path === '/inscripciones') { title = 'Inscripciones'; page = <Enrollment {...common} key={location.search} /> }
+  else if (path === '/asistencia') { title = 'Control de asistencia'; page = <Attendance {...common} /> }
+  else if (path === '/actividades') { title = 'Actividades'; page = <Activities {...common} /> }
+  else if (path === '/actividades/asignar') { title = 'Asignar actividad'; page = <Assignment {...common} /> }
+  else if (path === '/cronograma') { title = 'Cronograma'; page = <Schedule {...common} /> }
+  else if (path === '/staff') { title = 'Staff'; page = <Staff {...common} /> }
+  else if (path === '/staff/nuevo') { title = 'Registrar empleado'; page = <StaffForm {...common} key={location.search} /> }
+  else if (path === '/alojamiento') { title = 'Alojamiento'; page = <Rooms {...common} /> }
+  else if (path === '/reservaciones') { title = 'Reservaciones'; page = <Reservations {...common} key={location.search} /> }
+  else if (path === '/checkin') { title = 'Check-in / Check-out'; page = <LodgingCheckIn {...common} /> }
+  else { title = 'Página no encontrada'; page = <div className="nx-page"><p>No se encontró esta pantalla.</p><button className="nx-secondary" onClick={() => navigate('/dashboard')}>Ir al dashboard</button></div> }
+  return <Layout navigate={navigate} title={title} active={path} usuario={usuario} cerrarSesion={cerrarSesion}>{toast && <div className="nx-toast" role="status">{toast}<button onClick={() => setToast('')} aria-label="Cerrar">×</button></div>}{page}</Layout>;
 }
