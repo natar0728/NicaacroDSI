@@ -23,6 +23,22 @@
     font-size: 13px;
     margin: 0
 }
+.page-column {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.page-content {
+  flex: 1;
+  background-image: 
+    linear-gradient(rgba(244, 247, 246, 0.78), rgba(244, 247, 246, 0.78)),
+    url('/images/fondopantallas.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
 
 .nx-card {
     background: #fff;
