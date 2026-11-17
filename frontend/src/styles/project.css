@@ -23,6 +23,22 @@
     font-size: 13px;
     margin: 0
 }
+.page-column {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.page-content {
+  flex: 1;
+  background-image: 
+    linear-gradient(rgba(244, 247, 246, 0.78), rgba(244, 247, 246, 0.78)),
+    url('/images/fondopantallas.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
 
 .nx-card {
     background: #fff;
@@ -563,16 +579,15 @@
     flex-direction: column;
     align-items: center;
     gap: 3px;
-    
-    background: rgba(166, 227, 213, 0.18);
-    
-    backdrop-filter: blur(4px);
-    color: white;
-    
-    border: 1px solid rgba(198, 235, 200, 0.45);
+    background: rgba(166, 227, 213, 0.45);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    /* Texto oscuro para contrastar con el cristal claro */
+    color: #0b2e23;
+    border: 1px solid rgba(255, 255, 255, 0.6);
     border-radius: 16px;
     padding: 32px 55px;
-    box-shadow: 0 10px 30px rgba(20, 60, 44, 0.25);
+    box-shadow: 0 10px 30px rgba(20, 60, 44, 0.2);
     cursor: pointer;
 }
 
