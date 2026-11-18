@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
-
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import personaRoutes from './routes/persona.routes.js';
 import usuariosRoutes from './routes/usuarios.routes.js';
 import categoriaEmpleadoRoutes from './routes/categoriaEmpleado.routes.js';
@@ -68,6 +69,34 @@ app.use('/api/inscripciones', gestion, inscripcionesRoutes);
 app.use('/api/asignacionesActividad', soloListaStaff, asignacionesActividadRoutes);
 app.use('/api/habitaciones', gestion, habitacionesRoutes);
 app.use('/api/reservaciones', gestion, reservacionesRoutes);
+
+// Respuesta para rutas de API inexistentes.
+app.use('/api', (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Ruta de API no encontrada.'
+  });
+});
+
+// Ubicación del frontend compilado.
+const directorioActual = path.dirname(
+  fileURLToPath(import.meta.url)
+);
+
+const directorioFrontend = path.resolve(
+  directorioActual,
+  '../public'
+);
+
+// Servir los archivos del frontend.
+app.use(express.static(directorioFrontend));
+
+// Permitir que las rutas del frontend funcionen al recargar.
+app.get('/{*splat}', (req, res) => {
+  res.sendFile(
+    path.join(directorioFrontend, 'index.html')
+  );
+});
 
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
