@@ -33,21 +33,7 @@ const nav = [
 ];
 
 function LinkItem({ label, url, Icon, active, navigate, close }) {
-  const isActive = active === url || active.startsWith(`${url}/`);
-
-  return (
-    <button
-      type="button"
-      className={`side-link ${isActive ? 'side-active' : ''}`}
-      onClick={() => {
-        navigate(url);
-        close();
-      }}
-    >
-      <Icon size={16} strokeWidth={1.8} />
-      <span>{label}</span>
-    </button>
-  );
+  return <button type="button" className={'side-link ' + (active === url || active.startsWith(url + '/') ? 'side-active' : '')} onClick={() => { navigate(url); close(); }}><Icon size={16} strokeWidth={1.8} /><span>{label}</span></button>;
 }
 
 export default function Layout({
@@ -60,21 +46,18 @@ export default function Layout({
 }) {
   const [mobile, setMobile] = useState(false);
   const isStaff = usuario?.rol === 'STAFF';
-  const role =
-    {
-      ADMINISTRADOR: 'Administrador',
-      ORGANIZADOR: 'Organizador',
-      STAFF: 'Staff',
-    }[usuario?.rol] || 'Usuario';
-
-  const dateText = new Intl.DateTimeFormat('es-NI', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  }).format(new Date());
-
-  return (
+  const role = ({ ADMINISTRADOR: 'Administrador', ORGANIZADOR: 'Organizador', STAFF: 'Staff' })[usuario?.rol] || 'Usuario';
+  const dateText = new Intl.DateTimeFormat('es-NI', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).format(new Date());
+  function findEvent(e) {
+    e.preventDefault();
+    const term = fold(search.trim());
+    if (!term) { setSearchError('Escriba el código o el nombre de un evento.'); return; }
+    if (errores.eventos) { setSearchError('No fue posible consultar los eventos.'); return; }
+    const matches = eventos.filter(ev => fold(`${ev.codigo} ${ev.nombre}`).includes(term));
+    const event = eventos.find(ev => fold(ev.codigo) === term) || (matches.length === 1 ? matches[0] : null);
+    if (!event) { setSearchError(matches.length ? 'Hay varios resultados; busque por código.' : 'No se encontró el evento.'); return; }
+    setSearchError(''); navigate(`/eventos/${event._id}`);
+  }return (
     <div className="app-shell">
       {mobile && (
         <button
@@ -84,37 +67,30 @@ export default function Layout({
         />
       )}
 
-      <aside className={`sidebar ${mobile ? 'show-mobile' : ''}`}>
+      <aside className={'sidebar ' + (mobile ? 'show-mobile' : '')}>
         <div className="sidebar-brand">
           <img src="/images/logo.png" alt="NicaAcro Festival Play" />
           <strong>NICACRO</strong>
-          <span>F E S T I V A L &nbsp; P L A Y</span>
+          <span>F E S T I V A L   P L A Y</span>
           <em>{role}</em>
         </div>
 
         <div className="sidebar-nav">
-          {(isStaff
-            ? [['Mi cronograma', '/cronograma', CalendarRange]]
-            : nav
-          ).map(([label, url, Icon]) => (
-            <LinkItem
-              key={url}
-              label={label}
-              url={url}
-              Icon={Icon}
-              active={active}
-              navigate={navigate}
-              close={() => setMobile(false)}
-            />
-          ))}
-
+          {(isStaff ? [['Mi cronograma', '/cronograma', CalendarRange]] : nav).map(
+            ([label, url, Icon]) => (
+              <LinkItem
+                key={url}
+                {...{ label, url, Icon, active, navigate }}
+                close={() => setMobile(false)}
+              />
+            )
+          )}
           {usuario?.rol === 'ADMINISTRADOR' && (
             <LinkItem
               label="Usuarios"
               url="/administracion"
               Icon={Settings}
-              active={active}
-              navigate={navigate}
+              {...{ active, navigate }}
               close={() => setMobile(false)}
             />
           )}
