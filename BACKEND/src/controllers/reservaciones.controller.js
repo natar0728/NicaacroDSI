@@ -34,7 +34,9 @@ const manejarError = (error, res) => {
 
 const idValido = (id) => mongoose.isObjectIdOrHexString(id);
 
-async function validarReservacion(datos, id = null, comprobarDisponibilidad = true) {
+// exigirParticipante: solo se valida el tipo de persona al crear o al cambiar la persona,
+// para no bloquear la edición de reservaciones antiguas.
+async function validarReservacion(datos, id = null, comprobarDisponibilidad = true, exigirParticipante = true) {
   if (!idValido(datos.personaId) || !idValido(datos.habitacionId) || (datos.eventoId && !idValido(datos.eventoId))) return 'Seleccione una persona, habitación y evento válidos.';
   const entrada = new Date(datos.fechaEntrada), salida = new Date(datos.fechaSalida);
   if (Number.isNaN(entrada.getTime()) || Number.isNaN(salida.getTime()) || salida <= entrada) return 'La fecha de salida debe ser posterior a la de entrada.';
@@ -43,6 +45,7 @@ async function validarReservacion(datos, id = null, comprobarDisponibilidad = tr
   if (!comprobarDisponibilidad) return null;
   const [persona, habitacion, evento] = await Promise.all([Persona.findById(datos.personaId), Habitacion.findById(datos.habitacionId), datos.eventoId ? Evento.findById(datos.eventoId) : null]);
   if (!persona || persona.estado !== 'ACTIVA') return 'La persona seleccionada no existe o está inactiva.';
+  if (exigirParticipante && persona.tipoPersona !== 'PARTICIPANTE') return 'Solo se puede reservar para personas de tipo participante.';
   if (!habitacion) return 'La habitación seleccionada no existe.';
   if (datos.eventoId && !evento) return 'El evento seleccionado no existe.';
   if (!['PENDIENTE', 'CONFIRMADA'].includes(datos.estado)) return null;
@@ -140,9 +143,11 @@ export const actualizarReservacion = async (req, res) => {
       });
     }
 
+    const personaAnterior = String(reservacion.personaId);
     reservacion.set(datos);
+    const cambiaPersona = String(reservacion.personaId) !== personaAnterior;
     const cambiaReserva = ['personaId', 'habitacionId', 'eventoId', 'fechaEntrada', 'fechaSalida', 'estado'].some(campo => Object.hasOwn(datos, campo));
-    const error = await validarReservacion(reservacion, reservacion._id, cambiaReserva);
+    const error = await validarReservacion(reservacion, reservacion._id, cambiaReserva, cambiaPersona);
     if (error) return res.status(400).json({ success: false, message: error });
     await reservacion.save();
 
