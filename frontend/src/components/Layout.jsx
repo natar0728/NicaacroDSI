@@ -123,6 +123,7 @@ export default function Layout({
             </span>
           </div>
         </header>
+        {/* comentario de prueba */}
 
         <main id="contenido" className="page-content">
           {children}
