@@ -88,13 +88,18 @@ test('la inscripción requiere participante y evento válidos y evita duplicados
 });
 
 test('la reservación comprueba las fechas y la capacidad de la habitación', async () => {
-  Persona.findById = async () => ({ _id:ids.person, estado:'ACTIVA' });
+  let tipoPersona = 'EMPLEADO';
+  Persona.findById = async () => ({ _id:ids.person, tipoPersona, estado:'ACTIVA' });
   Habitacion.findById = async () => ({ _id:ids.room, estado:'DISPONIBLE', capacidad:1 });
   let occupied = false;
   Reservacion.find = () => chain(occupied ? [{ fechaEntrada:'2026-11-12', fechaSalida:'2026-11-14' }] : []);
   Reservacion.create = async body => ({ _id:ids.room, ...body });
   const body = { codigoReservacion:'RES-TEST', personaId:String(ids.person), habitacionId:String(ids.room), fechaEntrada:'2026-11-12', fechaSalida:'2026-11-14', estado:'CONFIRMADA' };
   assert.equal((await call('/api/reservaciones', { token:adminToken, method:'POST', body:{...body, fechaSalida:'2026-11-11'} })).status, 400);
+  const empleado = await call('/api/reservaciones', { token:adminToken, method:'POST', body });
+  assert.equal(empleado.status, 400);
+  assert.match(empleado.json.message, /participante/);
+  tipoPersona = 'PARTICIPANTE';
   assert.equal((await call('/api/reservaciones', { token:adminToken, method:'POST', body })).status, 201);
   occupied = true;
   assert.equal((await call('/api/reservaciones', { token:adminToken, method:'POST', body })).status, 400);

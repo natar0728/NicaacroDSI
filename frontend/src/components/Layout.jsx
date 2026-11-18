@@ -48,16 +48,11 @@ export default function Layout({
   const isStaff = usuario?.rol === 'STAFF';
   const role = ({ ADMINISTRADOR: 'Administrador', ORGANIZADOR: 'Organizador', STAFF: 'Staff' })[usuario?.rol] || 'Usuario';
   const dateText = new Intl.DateTimeFormat('es-NI', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).format(new Date());
-  function findEvent(e) {
-    e.preventDefault();
-    const term = fold(search.trim());
-    if (!term) { setSearchError('Escriba el código o el nombre de un evento.'); return; }
-    if (errores.eventos) { setSearchError('No fue posible consultar los eventos.'); return; }
-    const matches = eventos.filter(ev => fold(`${ev.codigo} ${ev.nombre}`).includes(term));
-    const event = eventos.find(ev => fold(ev.codigo) === term) || (matches.length === 1 ? matches[0] : null);
-    if (!event) { setSearchError(matches.length ? 'Hay varios resultados; busque por código.' : 'No se encontró el evento.'); return; }
-    setSearchError(''); navigate(`/eventos/${event._id}`);
-  }return (
+
+  // La búsqueda de eventos vive en el Dashboard (pages/Dashboard.jsx).
+  // Aquí había una copia huérfana de findEvent sin estado ni datos, lo que
+  // rompía ESLint (no-undef / no-unused-vars) y el pipeline de CI.
+  return (
     <div className="app-shell">
       {mobile && (
         <button
@@ -71,7 +66,7 @@ export default function Layout({
         <div className="sidebar-brand">
           <img src="/images/logo.png" alt="NicaAcro Festival Play" />
           <strong>NICACRO</strong>
-          <span>F E S T I V A L   P L A Y</span>
+          <span>F E S T I V A L &nbsp; P L A Y</span>
           <em>{role}</em>
         </div>
 
